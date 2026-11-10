@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accordeur chromatique — DFT / FFT</title>
+  <meta name="description" content="Accordeur chromatique temps réel : détection de notes par Transformée de Fourier Discrète, dans le navigateur.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Accordeur chromatique</h1>
+    <p class="sub">Détection de notes en temps réel par Transformée de Fourier Discrète</p>
+  </header>
+
+  <section class="card display" aria-live="polite">
+    <div id="note" class="note" data-state="idle">--</div>
+    <div id="freq" class="freq">Aucun son détecté</div>
+    <div id="detail" class="detail">&nbsp;</div>
+    <canvas id="meter" class="meter" aria-label="Jauge de justesse en cents"></canvas>
+  </section>
+
+  <section class="card">
+    <h2>Spectre d'amplitude <span class="muted">(FFT, échelle logarithmique)</span></h2>
+    <canvas id="spectrum" class="spectrum" aria-label="Spectre fréquentiel"></canvas>
+  </section>
+
+  <section class="card controls">
+    <div class="row">
+      <label>Source
+        <select id="source">
+          <option value="mic">Microphone</option>
+          <option value="synth">Signal de test (sans micro)</option>
+        </select>
+      </label>
+      <button id="toggle" class="primary" type="button">▶ Démarrer</button>
+    </div>
+
+    <div class="row">
+      <label>La4 = <input id="a4" type="number" min="400" max="480" step="1" value="440"> Hz</label>
+      <fieldset class="radios">
+        <label><input type="radio" name="notation" value="fr" checked> Do Ré Mi</label>
+        <label><input type="radio" name="notation" value="en"> C D E</label>
+      </fieldset>
+      <label>Seuil de niveau
+        <input id="threshold" type="range" min="-70" max="-20" step="1" value="-48">
+        <output id="thresholdOut">-48 dBFS</output>
+      </label>
+    </div>
+
+    <div class="row" id="synthRow">
+      <label class="grow">Signal de test
+        <input id="testFreq" type="range" min="40" max="1500" step="0.1" value="440">
+        <output id="testFreqOut">440.0 Hz</output>
+      </label>
+    </div>
+
+    <p id="status" class="status" role="status"></p>
+  </section>
+
+  <details class="card how">
+    <summary>Comment ça marche ?</summary>
+    <ol>
+      <li><strong>Capture</strong> : le micro est échantillonné (typiquement 44,1 ou 48 kHz) ; on analyse des trames de 8192 échantillons (≈ 170–190 ms).</li>
+      <li><strong>Fenêtrage de Hann</strong> : atténue les bords de la trame pour limiter les fuites spectrales.</li>
+      <li><strong>Transformée de Fourier Discrète</strong> <code>X[k] = Σ x[n]·e<sup>−2πikn/N</sup></code>, calculée par une FFT radix-2 (Cooley-Tukey) écrite à la main, avec bourrage de zéros ×2 (résolution d'affichage ≈ 2,7 Hz).</li>
+      <li><strong>Fondamentale</strong> : produit spectral harmonique (on cherche <em>f</em> telle que <em>f, 2f, 3f, 4f, 5f</em> portent tous de l'énergie), correction d'octave, puis interpolation parabolique du pic (précision &lt; 0,1 Hz).</li>
+      <li><strong>Note</strong> : <code>midi = 69 + 12·log₂(f / La4)</code> ; l'écart à la note la plus proche s'exprime en cents (1 cent = 1/100 de demi-ton).</li>
+    </ol>
+  </details>
+</main>
+
+<script src="dsp.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

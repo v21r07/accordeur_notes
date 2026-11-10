@@ -1,0 +1,11 @@
+{
+  "name": "accordeur-fft-js",
+  "version": "1.0.0",
+  "description": "Accordeur chromatique temps réel basé sur la Transformée de Fourier Discrète (navigateur)",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/dsp.test.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "engines": { "node": ">=18" }
+}
